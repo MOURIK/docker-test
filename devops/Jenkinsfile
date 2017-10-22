@@ -83,7 +83,7 @@ pipeline {
                 // Build local image docker
                 script {
                     def image = docker.image('java:8-jre-alpine').inside {
-                         sh "java --version"
+                         sh "java -version"
                     }
                 }
             }
