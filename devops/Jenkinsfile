@@ -1,0 +1,130 @@
+pipeline {
+
+    agent any
+
+    options { 
+        gitLabConnection('gitlab') 
+        gitlabBuilds(builds: ['compil', 'staticTests', 'sonar', 'publish', 'dynamicTests', 'image'])
+    }
+    
+    triggers { 
+        gitlab(triggerOnPush: true, triggerOnMergeRequest: false, branchFilterType: 'All')
+    }
+    
+    environment {
+        //Use Pipeline Utility Steps plugin to read information from pom.xml into env variables
+        IMAGE = readMavenPom().getArtifactId()
+        VERSION = readMavenPom().getVersion()
+    }
+
+    stages {
+        stage('Compilation') {
+            steps {
+                updateGitlabCommitStatus(name: 'compil', state: 'running')
+                sh './mvnw clean compile -DskipTests'
+            }
+            post {
+                success { updateGitlabCommitStatus(name: 'compil', state: 'success') }
+                failure { updateGitlabCommitStatus(name: 'compil', state: 'failed') }
+            }
+        }
+        
+        stage('Static Tests') {
+            parallel {
+                stage ("Unit Tests") {
+                    steps {
+                        updateGitlabCommitStatus(name: 'staticTests', state: 'running')
+                        sh './mvnw clean findbugs:findbugs package'
+                        junit 'target/surefire-reports/*.xml'
+                    }
+                }
+                stage ("Coverage Tests") {
+                    steps {
+                        sh './mvnw clean org.jacoco:jacoco-maven-plugin:prepare-agent install -Dmaven.test.failure.ignore=false'
+                    }
+                }
+            }
+            post {
+                success { updateGitlabCommitStatus(name: 'staticTests', state: 'success') }
+                failure { updateGitlabCommitStatus(name: 'staticTests', state: 'failed') }
+            }
+        }
+        
+        
+        stage ("SonarQube Analysis") {
+            steps {
+                updateGitlabCommitStatus(name: 'sonar', state: 'running')
+                withSonarQubeEnv('sonar') {
+                    sh './mvnw -DskipTests sonar:sonar'
+                }
+                timeout(time: 5, unit: 'MINUTES') { // Just in case something goes wrong, pipeline will be killed after a timeout
+                    script {
+                        def qg = waitForQualityGate() // Reuse taskId previously collected by withSonarQubeEnv
+                        if (qg.status != 'OK') {
+                            error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                        }
+                    }
+                }
+            }
+            post {
+                success { updateGitlabCommitStatus(name: 'sonar', state: 'success') }
+                failure { updateGitlabCommitStatus(name: 'sonar', state: 'failed') }
+            }
+        }
+        
+        
+        stage('Publish') {
+            steps {
+                updateGitlabCommitStatus(name: 'publish', state: 'success')
+                
+                // we only worry about archiving the jar file if the build steps are successful
+                sh './mvnw -s settings.xml deploy -DskipTests'
+                
+                // Build local image docker
+                script {
+                    def image = docker.image('java:8-jre-alpine').inside {
+                         sh "java --version"
+                    }
+                }
+            }
+            post {
+                success { updateGitlabCommitStatus(name: 'publish', state: 'success') }
+                failure { updateGitlabCommitStatus(name: 'publish', state: 'failed') }
+            }
+        }
+        
+            
+        stage('Dynamic Tests') {
+            parallel {
+                stage ("Integration Tests") {
+                    steps {
+                        updateGitlabCommitStatus(name: 'dynamicTests', state: 'running')
+                        echo 'Integration Tests needs to be writen based on Docker Image'
+                    }
+                }
+                stage ("Performance Tests") {
+                    steps {
+                        echo 'Perf Tests needs to be writen based on Docker Image'
+                    }
+                }
+            }
+            post {
+                success { updateGitlabCommitStatus(name: 'dynamicTests', state: 'success') }
+                failure { updateGitlabCommitStatus(name: 'dynamicTests', state: 'failed') }
+            }
+        }
+        
+        stage('Build And Deploy Image') {
+            steps {
+                script {
+                    echo 'Push Docker Image to Registry'
+                }
+            }
+            post {
+                success { updateGitlabCommitStatus(name: 'image', state: 'success') }
+                failure { updateGitlabCommitStatus(name: 'image', state: 'failed') }
+            }
+        }
+    }
+    
+}
