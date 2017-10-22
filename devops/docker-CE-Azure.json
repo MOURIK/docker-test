@@ -1,0 +1,69 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "westeurope"
+        },
+        "virtualMachineName": {
+            "value": "Swarm1"
+        },
+        "virtualMachineSize": {
+            "value": "Standard_DS1_v2"
+        },
+        "adminUsername": {
+            "value": "docker"
+        },
+        "virtualNetworkName": {
+            "value": "Swarm-vnet"
+        },
+        "networkInterfaceName": {
+            "value": "swarm1931"
+        },
+        "networkSecurityGroupName": {
+            "value": "Swarm1-nsg"
+        },
+        "adminPublicKey": {
+            "value": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCVC0j3RYcETvsqUVp/JEljWFSkJAhvfuO7PGH2UJEXxhJIHbGm4Yz0+F+dV7wra/52ruHYJhrsaUOzXpMUIq4ckhC4aXuPVx4sduXDM96QugK9JKNNuRU78PtKeFXsiNKU00zKBch8CZG8p65m40w1xgN5XX2vuZHxrgf+5JNt7HFygJSu4EL7U0DMp1ggyMYu5APEj3WvJT048K3wrOD27fitOyq/M1nlUq8x0aKmtn33/BjaFrJ0KPoxWud0boS8kEaiXFWTG07blSjnQFxNRbZ7/ajt4P6IadYeKXmkOAkgxmSbJ2sb2jCP9KEZ8uZcqqIYVlcXtoPZQ2nk6ByH"
+        },
+        "diagnosticsStorageAccountName": {
+            "value": "swarmdiag999"
+        },
+        "diagnosticsStorageAccountType": {
+            "value": "Standard_LRS"
+        },
+        "diagnosticsStorageAccountId": {
+            "value": "Microsoft.Storage/storageAccounts/swarmdiag999"
+        },
+        "addressPrefix": {
+            "value": "10.0.0.0/24"
+        },
+        "subnetName": {
+            "value": "default"
+        },
+        "subnetPrefix": {
+            "value": "10.0.0.0/24"
+        },
+        "publicIpAddressName": {
+            "value": "Swarm1-ip"
+        },
+        "publicIpAddressType": {
+            "value": "Dynamic"
+        },
+        "publicIpAddressSku": {
+            "value": "Basic"
+        },
+        "autoShutdownStatus": {
+            "value": "Enabled"
+        },
+        "autoShutdownTime": {
+            "value": "00:00"
+        },
+        "autoShutdownTimeZone": {
+            "value": "UTC"
+        },
+        "autoShutdownNotificationStatus": {
+            "value": "Disabled"
+        }
+    }
+}
